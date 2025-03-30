@@ -10,7 +10,13 @@ namespace ProyectoDotacion.Data
         public MySqlConnection connection;
         public bool Conectar()
         {
-            string cadenaConnection = "server=tramway.proxy.rlwy.net; database=p_dotacion; user=root; password=SYotyIqfjzGrVQKnfhyarjvlcEylCAAQ; port=52120";
+            string host = Environment.GetEnvironmentVariable("DB_HOST");
+            string port = Environment.GetEnvironmentVariable("DB_PORT");
+            string db = Environment.GetEnvironmentVariable("DB_NAME");
+            string user = Environment.GetEnvironmentVariable("DB_USER");
+            string password = Environment.GetEnvironmentVariable("DB_PASSWORD");
+
+            string cadenaConnection = $"server={host}; database={db}; user={user}; password={password}; port={port}"; ;
 
             connection = new MySqlConnection(cadenaConnection);
             try
