@@ -10,7 +10,7 @@ namespace ProyectoDotacion.Data
         public MySqlConnection connection;
         public bool Conectar()
         {
-            string cadenaConnection = "server=localhost; database=abastecete; user=root; password=0518; port=3306";
+            string cadenaConnection = "server=tramway.proxy.rlwy.net; database=p_dotacion; user=root; password=SYotyIqfjzGrVQKnfhyarjvlcEylCAAQ; port=52120";
 
             connection = new MySqlConnection(cadenaConnection);
             try

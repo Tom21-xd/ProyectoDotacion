@@ -26,3 +26,26 @@ var map = L.map('map', {
     scrollWheelZoom: true,
     zoomControl: false
 });
+
+const baseMaps = {
+    "OpenStreetMap": osm,
+    "Google Satellite": googleSatLayer
+};
+
+const overlayMaps = {
+
+};
+
+L.control.layers(baseMaps, overlayMaps, { position: 'topright', collapsed: true }).addTo(map);
+
+L.control.scale({ position: 'bottomleft', imperial: false }).addTo(map);
+
+L.control.zoom({
+    position: 'topright'
+}).addTo(map);
+
+L.control.fullscreen({
+    position: 'topright'
+}).addTo(map);
+
+L.control.locate({ flyTo: true, position: 'topright' }).addTo(map);
