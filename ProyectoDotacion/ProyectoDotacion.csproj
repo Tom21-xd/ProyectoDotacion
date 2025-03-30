@@ -11,6 +11,11 @@
 	</Target>
 
 	<ItemGroup>
+	  <None Include="wwwroot\lib\leaflet.fullscreen-master\.github\dependabot.yaml" />
+	  <None Include="wwwroot\lib\leaflet.fullscreen-master\.github\workflows\lint.yml" />
+	</ItemGroup>
+
+	<ItemGroup>
 	  <PackageReference Include="MySql.Data" Version="9.2.0" />
 	</ItemGroup>
 

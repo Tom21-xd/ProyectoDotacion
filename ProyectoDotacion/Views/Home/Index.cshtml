@@ -1,16 +1,36 @@
 ﻿
+
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+<link rel="stylesheet" href="~/lib/Leaflet-MiniMap-master/src/Control.MiniMap.css">
+<link rel="stylesheet" href="~/lib/Leaflet.markercluster-1.4.1/dist/MarkerCluster.css" />
+<link rel="stylesheet" href="~/lib/Leaflet.markercluster-1.4.1/dist/MarkerCluster.Default.css" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet.locatecontrol@0.82.0/dist/L.Control.Locate.min.css" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.css" />
+<link href="~/lib/leaflet.fullscreen-master/Control.FullScreen.css" rel="stylesheet" />
+<link href="~/lib/leaflet-search-master/dist/leaflet-search.src.css" rel="stylesheet" />
 
+<!-- Mapa -->
+<div id="map" class="relative w-full" style="height: calc(100vh - 68px); z-index: 1;"></div>
 
-<div id="map" class=""></div>
+<div class="fixed top-24 left-5 z-50 w-72">
+    <button class="bg-transparent relative me-2 mb-2 inline-flex items-center justify-center rounded-lg border border-black px-5 py-2.5 text-sm font-medium text-gray-900 transition-all duration-300 ease-in hover:bg-gradient-to-r hover:from-green-700 hover:via-white hover:to-green-700 hover:text-black">
+        Caquetá Style
+    </button>
 
-<style>
-    #map {
-        width: 100vw;
-        height: calc(100vh - 64px - 64px); /* Navbar + Footer */
-    }
-</style>
+</div>
+
 
 
 <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+<script src="~/lib/Leaflet.markercluster-1.4.1/dist/leaflet.markercluster.js"></script>
+<script src="~/lib/Leaflet-MiniMap-master/src/Control.MiniMap.js"></script>
+<script src="https://code.jquery.com/jquery-3.2.1.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/leaflet.locatecontrol@0.82.0/dist/L.Control.Locate.min.js"></script>
+<script src="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.js"></script>
+<script src="~/lib/leaflet.fullscreen-master/Control.FullScreen.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+<script src="https://unpkg.com/esri-leaflet@3.0.2/dist/esri-leaflet.js"></script>
+<script src="~/lib/leaflet-search-master/dist/leaflet-search.src.js"></script>
+
+
 <script src="~/js/index.js"></script>

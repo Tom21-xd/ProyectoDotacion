@@ -16,17 +16,15 @@
 </head>
 <body>
     <header>
-        <nav class="border-gray-200 bg-white px-4 py-2.5 lg:px-6 dark:bg-gray-800">
+        <nav class="border-gray-200 bg-white px-4 py-4 lg:px-6 dark:bg-gray-800">
             <div class="mx-auto flex max-w-screen-xl flex-wrap items-center justify-between">
-                <a href="https://flowbite.com" class="flex items-center">
-                    <img src="https://flowbite.com/docs/images/logo.svg" class="mr-3 h-6 sm:h-9" alt="Flowbite Logo" />
-                    <span class="self-center text-xl font-semibold whitespace-nowrap dark:text-white">Flowbite</span>
+                <a href="@Url.Action("Index","Home")" class="flex items-center">
+                    <img src="~/img/esc_caqueta.svg" class="mr-3 h-6 sm:h-9" alt="Flowbite Logo" />
+                    <span class="self-center text-xl font-semibold whitespace-nowrap dark:text-white">Dotacion Caqueta</span>
                 </a>
                 <div class="flex items-center lg:order-2">
-                    <a href="#" class="mr-2 rounded-lg px-4 py-2 text-sm font-medium text-gray-800 hover:bg-gray-50 focus:ring-4 focus:ring-gray-300 focus:outline-none lg:px-5 lg:py-2.5 dark:text-white dark:hover:bg-gray-700 dark:focus:ring-gray-800">Log in</a>
-                    <a href="#" class="bg-primary-700 mr-2 rounded-lg px-4 py-2 text-sm font-medium text-white hover:bg-primary-800 focus:ring-4 focus:ring-primary-300 focus:outline-none lg:px-5 lg:py-2.5 dark:bg-primary-600 dark:hover:bg-primary-700 dark:focus:ring-primary-800">Get started</a>
                     <button data-collapse-toggle="mobile-menu-2" type="button" class="ml-1 inline-flex items-center rounded-lg p-2 text-sm text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-200 lg:hidden dark:text-gray-400 dark:hover:bg-gray-700 dark:focus:ring-gray-600" aria-controls="mobile-menu-2" aria-expanded="false">
-                        <span class="sr-only">Open main menu</span>
+                        <span class="sr-only">Abrir</span>
                         <svg class="h-6 w-6" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M3 5a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 10a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 15a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clip-rule="evenodd"></path></svg>
                         <svg class="hidden h-6 w-6" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>
                     </button>
@@ -34,22 +32,10 @@
                 <div class="hidden w-full items-center justify-between lg:flex lg:w-auto lg:order-1" id="mobile-menu-2">
                     <ul class="mt-4 flex flex-col font-medium lg:flex-row lg:space-x-8 lg:mt-0">
                         <li>
-                            <a href="#" class="bg-primary-700 block rounded py-2 pr-4 pl-3 text-white lg:bg-transparent lg:text-primary-700 lg:p-0 dark:text-white" aria-current="page">Home</a>
+                            <a href="#" class="bg-primary-700 block rounded py-2 pr-4 pl-3 text-white lg:bg-transparent lg:text-primary-700 lg:p-0 dark:text-white" aria-current="page">Mapa</a>
                         </li>
                         <li>
-                            <a href="#" class="block border-b border-gray-100 py-2 pr-4 pl-3 text-gray-700 hover:bg-gray-50 lg:border-0 lg:p-0 dark:text-gray-400 dark:border-gray-700 lg:hover:bg-transparent lg:hover:text-primary-700 dark:hover:bg-gray-700 dark:hover:text-white lg:dark:hover:text-white lg:dark:hover:bg-transparent">Company</a>
-                        </li>
-                        <li>
-                            <a href="#" class="block border-b border-gray-100 py-2 pr-4 pl-3 text-gray-700 hover:bg-gray-50 lg:border-0 lg:p-0 dark:text-gray-400 dark:border-gray-700 lg:hover:bg-transparent lg:hover:text-primary-700 dark:hover:bg-gray-700 dark:hover:text-white lg:dark:hover:text-white lg:dark:hover:bg-transparent">Marketplace</a>
-                        </li>
-                        <li>
-                            <a href="#" class="block border-b border-gray-100 py-2 pr-4 pl-3 text-gray-700 hover:bg-gray-50 lg:border-0 lg:p-0 dark:text-gray-400 dark:border-gray-700 lg:hover:bg-transparent lg:hover:text-primary-700 dark:hover:bg-gray-700 dark:hover:text-white lg:dark:hover:text-white lg:dark:hover:bg-transparent">Features</a>
-                        </li>
-                        <li>
-                            <a href="#" class="block border-b border-gray-100 py-2 pr-4 pl-3 text-gray-700 hover:bg-gray-50 lg:border-0 lg:p-0 dark:text-gray-400 dark:border-gray-700 lg:hover:bg-transparent lg:hover:text-primary-700 dark:hover:bg-gray-700 dark:hover:text-white lg:dark:hover:text-white lg:dark:hover:bg-transparent">Team</a>
-                        </li>
-                        <li>
-                            <a href="#" class="block border-b border-gray-100 py-2 pr-4 pl-3 text-gray-700 hover:bg-gray-50 lg:border-0 lg:p-0 dark:text-gray-400 dark:border-gray-700 lg:hover:bg-transparent lg:hover:text-primary-700 dark:hover:bg-gray-700 dark:hover:text-white lg:dark:hover:text-white lg:dark:hover:bg-transparent">Contact</a>
+                            <a href="#" class="bg-primary-700 block rounded py-2 pr-4 pl-3 text-white lg:bg-transparent lg:text-primary-700 lg:p-0 dark:text-white" aria-current="page">Dashboard</a>
                         </li>
                     </ul>
                 </div>
@@ -65,20 +51,6 @@
         <span class="text-sm text-gray-500 sm:text-center dark:text-gray-400">
             © 2023 <a href="https://flowbite.com/" class="hover:underline">Flowbite™</a>. All Rights Reserved.
         </span>
-        <ul class="mt-3 flex flex-wrap items-center text-sm font-medium text-gray-500 sm:mt-0 dark:text-gray-400">
-            <li>
-                <a href="#" class="me-4 hover:underline md:me-6">About</a>
-            </li>
-            <li>
-                <a href="#" class="me-4 hover:underline md:me-6">Privacy Policy</a>
-            </li>
-            <li>
-                <a href="#" class="me-4 hover:underline md:me-6">Licensing</a>
-            </li>
-            <li>
-                <a href="#" class="hover:underline">Contact</a>
-            </li>
-        </ul>
     </footer>
 
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
