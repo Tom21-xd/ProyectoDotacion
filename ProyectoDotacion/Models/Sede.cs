@@ -10,6 +10,7 @@
         public string longitud { get; set; }
         public string latitud { get; set; }
         public int Fk_id_institucion { get; set; }
+        public int CantidadArticulos { get; set; }
         public Institucion? InstitucionNav { get; set; }
     }
 }

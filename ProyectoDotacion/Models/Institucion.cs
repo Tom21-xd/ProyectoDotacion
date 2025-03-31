@@ -8,5 +8,6 @@
         public string Calendario { get; set; }
         public int Fk_id_municipio { get; set; }
         public Municipio? MunicipioNav { get; set; }
+        public List<Sede> sedes { get; set; }
     }
 }
