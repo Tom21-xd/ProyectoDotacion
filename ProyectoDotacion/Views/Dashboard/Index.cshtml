@@ -1,0 +1,255 @@
+﻿@{
+    ViewData["Title"] = "Dashboard Dotación Caquetá";
+}
+
+<div class="min-h-screen bg-gray-100 p-6">
+    <h1 class="text-3xl font-bold mb-6 text-center">Dashboard Dotación Caquetá</h1>
+    <div class="grid grid-cols-3 items-center gap-4">
+
+        <div class="col-span-2 row-span-2 rounded-xl bg-gradient-to-r from-green-400 to-blue-500 p-[1px] h-[450px]">
+
+          
+            <div class="bg-white bg-opacity-80 rounded-xl p-4 h-full w-full">
+                <h2 class="text-lg font-semibold mb-2 text-center">Cantidad de sedes por institución</h2>
+                <div class="h-full w-full">
+                    <canvas id="cantidadInstitucionesChart" class="w-full h-full"></canvas>
+                </div>
+            </div>
+        </div>
+
+
+
+        <div class="rounded-xl border border-transparent bg-gradient-to-r from-purple-400 to-pink-500 p-[1px]">
+            <div class="bg-white bg-opacity-80 rounded-xl p-4 h-[300px] flex flex-col justify-between">
+                <h2 class="text-lg font-semibold mb-2 text-center">Sedes por Zona</h2>
+                <div class="relative w-full aspect-square max-h-[200px] mx-auto">
+                    <canvas id="municipioChart" class="absolute top-0 left-0 w-full h-full"></canvas>
+                </div>
+            </div>
+        </div>
+
+        
+        <div class="rounded-xl border border-transparent bg-gradient-to-r from-green-400 to-blue-500 p-[1px]">
+            <div class="bg-white bg-opacity-80 rounded-xl p-4 h-[300px] flex flex-col justify-between">
+                <h2 class="text-lg font-semibold mb-2 text-center">Cantidad de productos por institución</h2>
+                <div class="relative w-full h-full">
+                    <canvas id="graficaInstituciones" class="absolute top-0 left-0 w-full h-full"></canvas>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    fetch('/Dashboard/GetCantidadSede')
+      .then(res => res.json())
+      .then(data => {
+        const labels = data.map(item => item.nombre);
+        const cantidades = data.map(item => item.cantidad);
+
+        const ctx = document.getElementById("cantidadInstitucionesChart");
+
+        new Chart(ctx, {
+          type: "bar",
+          data: {
+            labels: labels,
+            datasets: [{
+              label: "Cantidad de Sedes",
+              data: cantidades,
+              backgroundColor: [
+                'rgba(255, 99, 132, 0.2)',
+                'rgba(255, 159, 64, 0.2)',
+                'rgba(255, 205, 86, 0.2)',
+                'rgba(75, 192, 192, 0.2)',
+                'rgba(54, 162, 235, 0.2)',
+                'rgba(153, 102, 255, 0.2)',
+                'rgba(201, 203, 207, 0.2)'
+              ],
+              borderColor: [
+                'rgba(255, 99, 132, 1)',
+                'rgba(255, 159, 64, 1)',
+                'rgba(255, 205, 86, 1)',
+                'rgba(75, 192, 192, 1)',
+                'rgba(54, 162, 235, 1)',
+                'rgba(153, 102, 255, 1)',
+                'rgba(201, 203, 207, 1)'
+              ],
+              borderWidth: 1
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            layout: {
+              padding: {
+                top: 10,
+                bottom: 10,
+                left: 10,
+                right: 10
+              }
+            },
+            plugins: {
+              legend: {
+                display: false
+              },
+              tooltip: {
+                mode: 'index',
+                intersect: false
+              }
+            },
+            scales: {
+              x: {
+                ticks: {
+                  display: false 
+                },
+                title: {
+                  display: true,
+                  text: "Instituciones",
+                  font: {
+                    size: 14,
+                    weight: 'bold'
+                  },
+                  padding: 10
+                },
+                grid: {
+                  display: false
+                }
+              },
+              y: {
+                beginAtZero: true,
+                title: {
+                  display: true,
+                  text: "Cantidad de Sedes",
+                  font: {
+                    size: 14,
+                    weight: 'bold'
+                  }
+                },
+                grid: {
+                  drawBorder: false
+                }
+              }
+            }
+          }
+        });
+      })
+      .catch(err => console.error("Error al obtener datos de instituciones", err));
+</script>
+
+
+<script>
+    fetch('/Dashboard/getZonas')
+      .then(res => res.json())
+      .then(data => {
+        const labels = data.map(item => item.nombre);
+        const valores = data.map(item => item.cantidad);
+
+        new Chart(document.getElementById("municipioChart"), {
+          type: 'doughnut',
+          data: {
+            labels: labels,
+            datasets: [{
+              label: 'Cantidad de sector',
+              data: valores,
+                 backgroundColor: [
+                'rgba(255, 99, 132, 0.2)',
+                'rgba(255, 159, 64, 0.2)',
+                'rgba(255, 205, 86, 0.2)'
+                 ]
+                
+            }]
+            
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false, 
+            cutout:'30%',
+            plugins: {
+              legend: {
+                position: 'top'
+              }
+            }
+          }
+        });
+      })
+      .catch(err => console.error("Error al obtener municipios", err));
+</script>
+
+<script>
+    fetch('/Dashboard/getinstitucionarticulo')
+    .then(res => res.json())
+    .then(data => {
+        console.log("Artículos por institución:", data);
+
+        const labels = data.map(item => item.nombre);
+        const cantidades = data.map(item => item.cantidad);
+
+        
+        const pointColors = cantidades.map((_, i) =>
+            `hsl(${(i * 37) % 360}, 70%, 70%)`
+        );
+
+        const ctx = document.getElementById("graficaInstituciones");
+
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Cantidad Total de Artículos',
+                    data: cantidades,
+                    backgroundColor: 'rgba(255,255,255,0)', 
+                    borderColor: 'rgba(59, 130, 246, 0.7)',
+                    borderWidth: 2,
+                    tension: 0.4,
+                    pointBackgroundColor: pointColors,
+                    pointBorderColor: pointColors,
+                    pointRadius: 4,
+                    pointHoverRadius: 6
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: false
+                    }
+                },
+                scales: {
+                    x: {
+                        ticks: {
+                            display: false
+                        },
+                        title: {
+                            display: true,
+                            text: 'Instituciones',
+                            font: {
+                                size: 14,
+                                weight: 'bold'
+                            }
+                        }
+                    },
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Cantidad de Artículos',
+                            font: {
+                                size: 14,
+                                weight: 'bold'
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    })
+    .catch(err => console.error("Error al obtener artículos por institución", err));
+</script>
+
+
+

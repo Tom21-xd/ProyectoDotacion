@@ -1,8 +1,580 @@
-﻿@{
-    ViewData["Title"] = "Home Page";
-}
+﻿@using System.Text.Json
+@model IEnumerable<ProyectoDotacion.Models.Municipio>
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+<link rel="stylesheet" href="~/lib/Leaflet-MiniMap-master/src/Control.MiniMap.css">
+<link rel="stylesheet" href="~/lib/Leaflet.markercluster-1.4.1/dist/MarkerCluster.css" />
+<link rel="stylesheet" href="~/lib/Leaflet.markercluster-1.4.1/dist/MarkerCluster.Default.css" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet.locatecontrol@0.82.0/dist/L.Control.Locate.min.css" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.css" />
+<link href="~/lib/leaflet.fullscreen-master/Control.FullScreen.css" rel="stylesheet" />
+<link href="~/lib/leaflet-search-master/dist/leaflet-search.src.css" rel="stylesheet" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.css" />
+
+
+<div id="map" class="relative w-full" style="height: calc(100vh - 138px); z-index: 1;"></div>
+
+
+<div id="routePanel" class="fixed top-5 left-5 z-50 w-[20%] rounded-lg bg-white p-4 shadow-lg" style="max-height: 73%; overflow-y: auto; margin-top:100px;">
+
+    <label for="municipio" class="mb-2 block text-sm font-medium text-gray-900">Selecciona un Municipio</label>
+    <div id="lista-municipios" class="mb-4 grid grid-cols-2 gap-2">
+        @foreach (var item in Model)
+        {
+            <div class="flex items-center">
+                <input type="checkbox"
+                       id="municipio-@item.Id"
+                       value="@item.Id"
+                       class="checkbox-municipio h-4 w-4 rounded-sm border-gray-300 text-green-600 focus:ring-green-500">
+                <label for="municipio-@item.Id" class="ms-2 text-sm font-medium text-gray-900">
+                    @item.Nombre
+                </label>
+            </div>
+        }
+    </div>
+
+
+    <div class="mx-auto max-w-sm pt-5">
+        <label for="institucion" class="mb-2 block text-sm font-medium text-gray-900">Seleccione una Institucion</label>
+        <select id="institucion" class="block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900 focus:ring-blue-500 focus:border-blue-500" disabled>
+            <option selected>Seleccione</option>
+          
+        </select>
+    </div>
+
+    <div class="mt-5 mb-2 flex justify-center gap-2 border-b border-gray-300 pb-2">
+        <button type="button" class="rounded-full border border-blue-500 px-5 py-2.5 text-center text-sm font-medium text-blue-500 hover:text-white hover:bg-blue-500" onclick="toggleLegendModal()">Mostrar leyendas</button>
+        <button id="btnToggleTabla" class="rounded-full border border-green-500 px-5 py-2.5 text-center text-sm font-medium text-green-500 hover:text-white hover:bg-green-500">
+            Mostrar atributos
+        </button>
+    </div>
 </div>
+
+
+<div id="legendModal" class="fixed top-1/2 left-1/2 z-50 hidden -translate-x-1/2 -translate-y-1/2 transform">
+    <div id="legendModalContent" class="w-80 rounded-lg bg-white shadow-lg" style="max-height: 60vh; overflow-y: auto;">
+        <div id="legendModalHeader" class="sticky top-0 cursor-move border-b border-gray-200 bg-white p-4">
+            <div class="flex items-center justify-between">
+                <h3 class="text-lg font-semibold text-green-500">Leyendas</h3>
+                <button onclick="toggleLegendModal()" class="text-gray-600 hover:text-gray-800">&times;</button>
+            </div>
+        </div>
+        <div id="legendContent" class="p-4">
+        </div>
+    </div>
+</div>
+
+
+
+<div id="tablaAtributos" class="scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-100 fixed bottom-20 left-1/2 z-40 hidden w-10/12 -translate-x-1/2 transform overflow-auto rounded-lg shadow-md ring-1 ring-gray-200 dark:ring-gray-700" style="max-height: 25vh;">
+    <div class="relative overflow-x-auto shadow-md sm:rounded-lg">
+        <table id="tablaSedes" class="w-full text-left text-sm text-gray-500 rtl:text-right dark:text-gray-400">
+            <thead class="bg-gray-50 text-xs text-gray-700 uppercase dark:bg-gray-700 dark:text-gray-400">
+                <tr>
+                    <th scope="col" class="px-6 py-3">Nombre</th>
+                    <th scope="col" class="px-6 py-3">Código DANE</th>
+                    <th scope="col" class="px-6 py-3">Zona</th>
+                    <th scope="col" class="px-6 py-3">Cantidad de artículos</th>
+                </tr>
+            </thead>
+            <tbody id="tbodySedes">
+                <!-- Se llenará con JS -->
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<style>
+    /* Scrollbar estilizado solo para tabla */
+    #tablaAtributos::-webkit-scrollbar {
+        width: 8px;
+    }
+
+    #tablaAtributos::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 6px;
+    }
+
+    #tablaAtributos::-webkit-scrollbar-thumb {
+        background: #999;
+        border-radius: 6px;
+    }
+
+        #tablaAtributos::-webkit-scrollbar-thumb:hover {
+            background: #666;
+        }
+
+    /* Opcional para Firefox */
+    #tablaAtributos {
+        scrollbar-width: thin;
+        scrollbar-color: #999 #f1f1f1;
+    }
+
+</style>
+
+<script src="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.min.js"></script>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+<script src="~/lib/Leaflet.markercluster-1.4.1/dist/leaflet.markercluster.js"></script>
+<script src="~/lib/Leaflet-MiniMap-master/src/Control.MiniMap.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/leaflet.locatecontrol@0.82.0/dist/L.Control.Locate.min.js"></script>
+<script src="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.js"></script>
+<script src="~/lib/leaflet.fullscreen-master/Control.FullScreen.js"></script>
+<script src="https://unpkg.com/esri-leaflet@3.0.2/dist/esri-leaflet.js"></script>
+<script src="~/lib/leaflet-search-master/dist/leaflet-search.src.js"></script>
+
+
+<script>
+
+    var osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors',
+        maxZoom: 18
+    });
+
+    var googleSatLayer = L.tileLayer('http://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', {
+        maxZoom: 20,
+        subdomains: ['mt0', 'mt1', 'mt2', 'mt3']
+    });
+
+    var miniMapLayerOSM = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors',
+        maxZoom: 18
+    });
+
+    var miniMapLayerGoogle = L.tileLayer('http://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', {
+        maxZoom: 20,
+        subdomains: ['mt0', 'mt1', 'mt2', 'mt3']
+    });
+
+    var map = L.map('map', {
+        center: [10.590812687530157, -74.18780172831298],
+        zoom: 4,
+        layers: [osm],
+        scrollWheelZoom: true,
+        zoomControl: false
+    });
+
+    const baseMaps = {
+        "OpenStreetMap": osm,
+        "Google Satellite": googleSatLayer
+    };
+
+    const sedesMarker = L.markerClusterGroup();
+
+    const overlayMaps = {
+        "sedes": sedesMarker
+    };
+
+    L.control.layers(baseMaps, overlayMaps, { position: 'topright', collapsed: true }).addTo(map);
+
+    L.control.scale({ position: 'bottomleft', imperial: false }).addTo(map);
+
+    L.control.zoom({
+        position: 'topright'
+    }).addTo(map);
+
+    L.control.fullscreen({
+        position: 'topright'
+    }).addTo(map);
+
+
+    var miniMap = new L.Control.MiniMap(miniMapLayerOSM, {
+        position: 'bottomright',
+        toggleDisplay: true,
+        minimized: false
+    }).addTo(map);
+
+    map.on('baselayerchange', function (e) {
+        if (e.name === "OpenStreetMap") {
+            miniMap.changeLayer(miniMapLayerOSM);
+        } else if (e.name === "Google Satellite") {
+            miniMap.changeLayer(miniMapLayerGoogle);
+        }
+    });
+
+    const iconRural = L.icon({
+        iconUrl: '/img/rural.png',
+        iconSize: [35, 35]
+
+    });
+
+    const iconUrbana = L.icon({
+        iconUrl: '/img/urbana.png',
+        iconSize: [35, 35]
+
+    });
+
+    L.control.locate({ flyTo: true, position: 'topright' }).addTo(map);
+    const municipiosConInstituciones = @Html.Raw(JsonSerializer.Serialize(Model));
+
+    for (const municipio of municipiosConInstituciones) {
+        if (
+            municipio.latitud && municipio.longitud &&
+            !isNaN(parseFloat(municipio.latitud)) &&
+            !isNaN(parseFloat(municipio.longitud))
+        ) {
+            const lat = parseFloat(municipio.latitud);
+            const lng = parseFloat(municipio.longitud);
+
+            const marker = L.marker([lat, lng], {
+                icon: L.icon({
+                    iconUrl: '/img/city.png', // reemplaza con tu ícono deseado
+                    iconSize: [30, 30]
+                })
+            }).bindPopup(`<strong>${municipio.Nombre}</strong>`);
+
+            marker.addTo(map);
+        }
+    }
+
+    const checkboxes = document.querySelectorAll(".checkbox-municipio");
+    const selectInstitucion = document.getElementById("institucion");
+
+    let allSedes = [];
+
+    (async function () {
+        try {
+            const res = await fetch('/Home/GetSedes');
+            const data = await res.json();
+            allSedes = data;
+            
+            actualizarInstituciones();
+            filtrarSedes();
+            generarRutasDesdeSedesASusCabeceras(data);
+
+        } catch (err) {
+            console.error("Error al obtener sedes", err);
+        }
+    })();
+
+
+    checkboxes.forEach(checkbox => {
+        checkbox.addEventListener("change", () => {
+            actualizarInstituciones();
+            filtrarSedes();
+
+        });
+    });
+
+    selectInstitucion.addEventListener("change", filtrarSedes);
+
+    function actualizarInstituciones() {
+        const seleccionados = Array.from(checkboxes)
+            .filter(cb => cb.checked)
+            .map(cb => parseInt(cb.value));
+
+        selectInstitucion.innerHTML = "";
+        selectInstitucion.disabled = true;
+
+        if (seleccionados.length === 0) {
+            selectInstitucion.innerHTML = `<option selected>Seleccione</option>`;
+            return;
+        }
+
+        const instituciones = municipiosConInstituciones
+            .filter(m => seleccionados.includes(m.Id))
+            .flatMap(m => m.instituciones);
+
+        const institucionesUnicas = [];
+        const ids = new Set();
+
+        for (const inst of instituciones) {
+            if (!ids.has(inst.Id)) {
+                ids.add(inst.Id);
+                institucionesUnicas.push(inst);
+            }
+        }
+
+        institucionesUnicas.sort((a, b) => a.Nombre.localeCompare(b.Nombre));
+
+        selectInstitucion.disabled = false;
+        selectInstitucion.innerHTML = `<option selected>Seleccione</option>`;
+
+        if (institucionesUnicas.length === 0) {
+            const option = document.createElement("option");
+            option.textContent = "Sin instituciones disponibles";
+            option.disabled = true;
+            selectInstitucion.appendChild(option);
+            return;
+        }
+
+        institucionesUnicas.forEach(inst => {
+            const option = document.createElement("option");
+            option.value = inst.Id;
+            option.textContent = inst.Nombre;
+            selectInstitucion.appendChild(option);
+        });
+    }
+
+    let rutasActuales = [];
+
+    function limpiarRutas() {
+        rutasActuales.forEach(r => map.removeLayer(r));
+        rutasActuales = [];
+    }
+
+
+    function filtrarSedes() {
+        const idInstitucion = parseInt(selectInstitucion.value);
+        const municipiosSeleccionados = Array.from(checkboxes)
+            .filter(cb => cb.checked)
+            .map(cb => parseInt(cb.value));
+
+        sedesMarker.clearLayers();
+        limpiarRutas(); 
+
+        let sedesFiltradas = [];
+
+        if (!isNaN(idInstitucion)) {
+            
+            sedesFiltradas = allSedes.filter(sede => sede.fk_id_institucion === idInstitucion);
+            console.log(sedesFiltradas);
+        } else if (municipiosSeleccionados.length > 0) {
+            // Obtener las instituciones correspondientes
+            const instituciones = municipiosConInstituciones
+                .filter(m => municipiosSeleccionados.includes(m.Id))
+                .flatMap(m => m.instituciones.map(i => i.Id));
+
+            sedesFiltradas = allSedes.filter(sede => instituciones.includes(sede.fk_id_institucion));
+        } else {
+            // Mostrar todas las sedes
+            sedesFiltradas = allSedes;
+        }
+
+        if (sedesFiltradas.length === 0) {
+            alert("No hay sedes para mostrar con los filtros actuales.");
+            return;
+        }
+
+        sedesFiltradas.forEach(sede => {
+            if (
+                sede.latitud && sede.longitud &&
+                !isNaN(parseFloat(sede.latitud)) &&
+                !isNaN(parseFloat(sede.longitud))
+            ) {
+                const marker = L.marker([parseFloat(sede.latitud), parseFloat(sede.longitud)], {
+                    icon: sede.zona === "Rural" ? iconRural : iconUrbana
+                }).bindPopup(`
+                    <strong>${sede.nombre}</strong><br>
+                    ${sede.direccion}<br>
+                    Código DANE: ${sede.codigoDane}
+                `);
+
+                sedesMarker.addLayer(marker);
+            }
+        });
+
+        map.addLayer(sedesMarker);
+        map.fitBounds(sedesMarker.getBounds(), { padding: [50, 50] });
+        actualizarTabla(sedesFiltradas);
+     
+    }
+
+
+    function toggleLegendModal() {
+        const modal = document.getElementById("legendModal");
+        modal.classList.toggle("hidden");
+        generateLegendContent();
+
+    }
+    function makeModalDraggable() {
+        const modalContent = document.getElementById("legendModalContent");
+        const modalHeader = document.getElementById("legendModalHeader");
+
+        let isDragging = false;
+        let startX, startY;
+
+        modalHeader.addEventListener("mousedown", (e) => {
+            isDragging = true;
+            startX = e.clientX - modalContent.offsetLeft;
+            startY = e.clientY - modalContent.offsetTop;
+            document.addEventListener("mousemove", drag);
+            document.addEventListener("mouseup", stopDrag);
+        });
+
+        function drag(e) {
+            if (isDragging) {
+                modalContent.style.left = `${e.clientX - startX}px`;
+                modalContent.style.top = `${e.clientY - startY}px`;
+                modalContent.style.position = "absolute";
+            }
+        }
+
+        function stopDrag() {
+            isDragging = false;
+            document.removeEventListener("mousemove", drag);
+            document.removeEventListener("mouseup", stopDrag);
+        }
+    }
+
+    document.addEventListener("DOMContentLoaded", makeModalDraggable);
+
+    function sleep(ms) {
+        return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+
+    function generateLegendContent() {
+        const legendContent = document.getElementById("legendContent");
+        legendContent.innerHTML = "";
+
+        const peajesTitle = document.createElement("h4");
+        peajesTitle.className = "font-semibold text-md text-gray-800 mb-2";
+        peajesTitle.textContent = "Zonas";
+        legendContent.appendChild(peajesTitle);
+
+        const Zonas = {
+            "Urbano": "/img/urbana.png",
+            "Rural": "/img/rural.png"
+        };
+
+        Object.keys(Zonas).forEach(type => {
+            const legendItem = document.createElement("div");
+            legendItem.className = "flex items-center mb-2";
+
+            const iconImage = document.createElement("img");
+            iconImage.src = Zonas[type];
+            iconImage.className = "w-6 h-6 mr-2";
+
+            const typeLabel = document.createElement("span");
+            typeLabel.className = "text-sm text-gray-600";
+            typeLabel.textContent = type;
+
+            legendItem.appendChild(iconImage);
+            legendItem.appendChild(typeLabel);
+            legendContent.appendChild(legendItem);
+        });
+
+    }
+
+    const btnToggleTabla = document.getElementById("btnToggleTabla");
+    const tablaAtributos = document.getElementById("tablaAtributos");
+    let tablaVisible = false;
+
+    btnToggleTabla.addEventListener("click", () => {
+        tablaVisible = !tablaVisible;
+        tablaAtributos.classList.toggle("hidden", !tablaVisible);
+        btnToggleTabla.textContent = tablaVisible ? "Ocultar atributos" : "Mostrar atributos";
+
+        if (tablaVisible) {
+            console.log("Mostrando tabla de atributos...");
+        } else {
+            console.log("Ocultando tabla de atributos...");
+        }
+    });
+
+    function actualizarTabla(sedes, modoCantidad = false) {
+        const tbody = document.getElementById("tbodySedes");
+        tbody.innerHTML = "";
+
+        sedes.forEach(sede => {
+            const tr = document.createElement("tr");
+            tr.className = "odd:bg-white odd:dark:bg-gray-900 even:bg-gray-50 even:dark:bg-gray-800 border-b dark:border-gray-700 border-gray-200";
+
+            const nombre = modoCantidad ? sede.nombre : sede.nombre;
+            const codigo = modoCantidad ? sede.codigoDane : sede.codigoDane;
+            const zona = modoCantidad ? sede.zona : sede.zona;
+            const cantidad = sede.cantidadArticulos;
+            
+
+            tr.innerHTML = `
+                <th scope="row" class="px-6 py-4 font-medium whitespace-nowrap text-gray-900 dark:text-white">${nombre}</th>
+                <td class="px-6 py-4">${codigo ?? ''}</td>
+                <td class="px-6 py-4">${zona}</td>
+                <td class="px-6 py-4">${cantidad}</td>
+            `;
+
+            tbody.appendChild(tr);
+        });
+    }
+
+
+
+    async function generarRutasDesdeSedesASusCabeceras(sedes) {
+        limpiarRutas();
+
+        for (let sede of sedes) {
+            const municipio = municipiosConInstituciones
+                .find(m => m.instituciones.some(i => i.Id === sede.fk_id_institucion));
+
+            if (sede.latitud && sede.longitud && municipio?.latitud && municipio?.longitud) {
+                const latSede = parseFloat(sede.latitud);
+                const lngSede = parseFloat(sede.longitud);
+                const latMunicipio = parseFloat(municipio.latitud);
+                const lngMunicipio = parseFloat(municipio.longitud);
+
+                await mostrarRutaEntre(latSede, lngSede, latMunicipio, lngMunicipio);
+                await sleep(1500); //espera entre rutas
+            }
+        }
+    }
+
+
+    async function mostrarRutaEntre(latSede, lngSede, latMunicipio, lngMunicipio) {
+        return new Promise((resolve, reject) => {
+            const control = L.Routing.control({
+                waypoints: [
+                    L.latLng(latSede, lngSede),
+                    L.latLng(latMunicipio, lngMunicipio)
+                ],
+                createMarker: () => null,
+                lineOptions: {
+                    styles: [{ color: 'blue', weight: 3, opacity: 0.5 }]
+                },
+                router: L.Routing.osrmv1({
+                serviceUrl: 'https://router.project-osrm.org/route/v1', // corregido
+                profile: 'foot'
+                }),
+
+                addWaypoints: false,
+                draggableWaypoints: false,
+                fitSelectedRoutes: false,
+                show: false
+            })
+            .on('routesfound', function (e) {
+                const route = e.routes[0];
+                const summary = route.summary;
+
+                const distanciaKm = (summary.totalDistance / 1000).toFixed(2);
+                const duracionMin = Math.round(summary.totalTime / 60);
+
+                const line = L.polyline(route.coordinates, {
+                    color: 'blue',
+                    weight: 4,
+                    opacity: 0
+                }).addTo(map);
+
+                rutasActuales.push(line); //guardar para poder limpiar
+
+                const tooltipContent = `🛣️ ${distanciaKm} km · ${duracionMin} min a pie`;
+
+                line.bindTooltip(tooltipContent, {
+                    permanent: false,
+                    sticky: true,
+                    direction: 'top',
+                    className: 'tooltip-ruta'
+                });
+
+                line.on('mouseover', () => {
+                    line.setStyle({ opacity: 1 });
+                });
+                line.on('mouseout', () => {
+                    line.setStyle({ opacity: 0 });
+                });
+
+                resolve();
+            })
+            .on('routingerror', err => {
+                console.warn("Ruta fallida", err);
+                resolve(); //para que no se detenga el for
+            })
+            .addTo(map);
+        });
+    }
+
+
+ 
+</script>
+
+
