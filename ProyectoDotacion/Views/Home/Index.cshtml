@@ -127,6 +127,8 @@
 
 <script>
 
+    
+
     var osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors',
         maxZoom: 18
@@ -241,7 +243,6 @@
             
             actualizarInstituciones();
             filtrarSedes();
-            generarRutasDesdeSedesASusCabeceras(data);
 
         } catch (err) {
             console.error("Error al obtener sedes", err);
@@ -307,68 +308,12 @@
         });
     }
 
+    let rutasJson = [];
     let rutasActuales = [];
 
     function limpiarRutas() {
         rutasActuales.forEach(r => map.removeLayer(r));
         rutasActuales = [];
-    }
-
-
-    function filtrarSedes() {
-        const idInstitucion = parseInt(selectInstitucion.value);
-        const municipiosSeleccionados = Array.from(checkboxes)
-            .filter(cb => cb.checked)
-            .map(cb => parseInt(cb.value));
-
-        sedesMarker.clearLayers();
-        limpiarRutas(); 
-
-        let sedesFiltradas = [];
-
-        if (!isNaN(idInstitucion)) {
-            
-            sedesFiltradas = allSedes.filter(sede => sede.fk_id_institucion === idInstitucion);
-            console.log(sedesFiltradas);
-        } else if (municipiosSeleccionados.length > 0) {
-            // Obtener las instituciones correspondientes
-            const instituciones = municipiosConInstituciones
-                .filter(m => municipiosSeleccionados.includes(m.Id))
-                .flatMap(m => m.instituciones.map(i => i.Id));
-
-            sedesFiltradas = allSedes.filter(sede => instituciones.includes(sede.fk_id_institucion));
-        } else {
-            // Mostrar todas las sedes
-            sedesFiltradas = allSedes;
-        }
-
-        if (sedesFiltradas.length === 0) {
-            alert("No hay sedes para mostrar con los filtros actuales.");
-            return;
-        }
-
-        sedesFiltradas.forEach(sede => {
-            if (
-                sede.latitud && sede.longitud &&
-                !isNaN(parseFloat(sede.latitud)) &&
-                !isNaN(parseFloat(sede.longitud))
-            ) {
-                const marker = L.marker([parseFloat(sede.latitud), parseFloat(sede.longitud)], {
-                    icon: sede.zona === "Rural" ? iconRural : iconUrbana
-                }).bindPopup(`
-                    <strong>${sede.nombre}</strong><br>
-                    ${sede.direccion}<br>
-                    Código DANE: ${sede.codigoDane}
-                `);
-
-                sedesMarker.addLayer(marker);
-            }
-        });
-
-        map.addLayer(sedesMarker);
-        map.fitBounds(sedesMarker.getBounds(), { padding: [50, 50] });
-        actualizarTabla(sedesFiltradas);
-     
     }
 
 
@@ -488,93 +433,106 @@
             tbody.appendChild(tr);
         });
     }
-
-
-
-    async function generarRutasDesdeSedesASusCabeceras(sedes) {
+    function pintarRutasGuardadas(rutasFiltradas) {
         limpiarRutas();
+        rutasFiltradas.forEach(ruta => {
+            const coords = ruta.coordenadas;
+            const polyline = L.polyline(coords, {
+                color: 'blue',
+                weight: 4,
+                opacity: 0.5
+            }).addTo(map);
 
-        for (let sede of sedes) {
-            const municipio = municipiosConInstituciones
-                .find(m => m.instituciones.some(i => i.Id === sede.fk_id_institucion));
+            rutasActuales.push(polyline);
 
-            if (sede.latitud && sede.longitud && municipio?.latitud && municipio?.longitud) {
-                const latSede = parseFloat(sede.latitud);
-                const lngSede = parseFloat(sede.longitud);
-                const latMunicipio = parseFloat(municipio.latitud);
-                const lngMunicipio = parseFloat(municipio.longitud);
+            const tooltipContent = `🛣️ ${ruta.distanciaKm} km · ${ruta.duracionMin} min`;
 
-                await mostrarRutaEntre(latSede, lngSede, latMunicipio, lngMunicipio);
-                await sleep(1500); //espera entre rutas
-            }
-        }
-    }
+            polyline.bindTooltip(tooltipContent, {
+                permanent: false,
+                sticky: true,
+                direction: 'top',
+                className: 'tooltip-ruta'
+            });
 
-
-    async function mostrarRutaEntre(latSede, lngSede, latMunicipio, lngMunicipio) {
-        return new Promise((resolve, reject) => {
-            const control = L.Routing.control({
-                waypoints: [
-                    L.latLng(latSede, lngSede),
-                    L.latLng(latMunicipio, lngMunicipio)
-                ],
-                createMarker: () => null,
-                lineOptions: {
-                    styles: [{ color: 'blue', weight: 3, opacity: 0.5 }]
-                },
-                router: L.Routing.osrmv1({
-                serviceUrl: 'https://router.project-osrm.org/route/v1', // corregido
-                profile: 'foot'
-                }),
-
-                addWaypoints: false,
-                draggableWaypoints: false,
-                fitSelectedRoutes: false,
-                show: false
-            })
-            .on('routesfound', function (e) {
-                const route = e.routes[0];
-                const summary = route.summary;
-
-                const distanciaKm = (summary.totalDistance / 1000).toFixed(2);
-                const duracionMin = Math.round(summary.totalTime / 60);
-
-                const line = L.polyline(route.coordinates, {
-                    color: 'blue',
-                    weight: 4,
-                    opacity: 0
-                }).addTo(map);
-
-                rutasActuales.push(line); //guardar para poder limpiar
-
-                const tooltipContent = `🛣️ ${distanciaKm} km · ${duracionMin} min a pie`;
-
-                line.bindTooltip(tooltipContent, {
-                    permanent: false,
-                    sticky: true,
-                    direction: 'top',
-                    className: 'tooltip-ruta'
-                });
-
-                line.on('mouseover', () => {
-                    line.setStyle({ opacity: 1 });
-                });
-                line.on('mouseout', () => {
-                    line.setStyle({ opacity: 0 });
-                });
-
-                resolve();
-            })
-            .on('routingerror', err => {
-                console.warn("Ruta fallida", err);
-                resolve(); //para que no se detenga el for
-            })
-            .addTo(map);
+            polyline.on('mouseover', () => polyline.setStyle({ opacity: 1 }));
+            polyline.on('mouseout', () => polyline.setStyle({ opacity: 0.5 }));
         });
     }
 
+    function filtrarYMostrarRutas(sedesFiltradas) {
+        const destinosUnicos = new Set();
+        const municipiosMap = new Map(municipiosConInstituciones.map(m => [m.Id, m.Nombre?.toUpperCase().trim()]));
 
- 
+        sedesFiltradas.forEach(sede => {
+            const municipio = municipiosConInstituciones.find(m =>
+                m.instituciones.some(i => i.Id === sede.fk_id_institucion)
+            );
+            if (municipio && municipio.Nombre) destinosUnicos.add(municipio.Nombre.toUpperCase().trim());
+        });
+
+        const rutasFiltradas = rutasJson.filter(r => destinosUnicos.has(r.destino.toUpperCase().trim()));
+        pintarRutasGuardadas(rutasFiltradas);
+    }
+
+    function filtrarSedes() {
+        const idInstitucion = parseInt(selectInstitucion.value);
+        const municipiosSeleccionados = Array.from(checkboxes)
+            .filter(cb => cb.checked)
+            .map(cb => parseInt(cb.value));
+
+        sedesMarker.clearLayers();
+        limpiarRutas();
+
+        let sedesFiltradas = [];
+
+        if (!isNaN(idInstitucion)) {
+            sedesFiltradas = allSedes.filter(sede => sede.fk_id_institucion === idInstitucion);
+        } else if (municipiosSeleccionados.length > 0) {
+            const instituciones = municipiosConInstituciones
+                .filter(m => municipiosSeleccionados.includes(m.Id))
+                .flatMap(m => m.instituciones.map(i => i.Id));
+
+            sedesFiltradas = allSedes.filter(sede => instituciones.includes(sede.fk_id_institucion));
+        } else {
+            sedesFiltradas = allSedes;
+        }
+
+        if (sedesFiltradas.length === 0) {
+            return;
+        }
+
+        sedesFiltradas.forEach(sede => {
+            if (
+                sede.latitud && sede.longitud &&
+                !isNaN(parseFloat(sede.latitud)) &&
+                !isNaN(parseFloat(sede.longitud))
+            ) {
+                const marker = L.marker([parseFloat(sede.latitud), parseFloat(sede.longitud)], {
+                    icon: sede.zona === "Rural" ? iconRural : iconUrbana
+                }).bindPopup(`
+                    <strong>${sede.nombre}</strong><br>
+                    ${sede.direccion}<br>
+                    Código DANE: ${sede.codigoDane}
+                `);
+
+                sedesMarker.addLayer(marker);
+            }
+        });
+
+        map.addLayer(sedesMarker);
+        map.fitBounds(sedesMarker.getBounds(), { padding: [50, 50] });
+        actualizarTabla(sedesFiltradas);
+        filtrarYMostrarRutas(sedesFiltradas);
+    }
+
+    fetch('/rutas_sedes.json')
+        .then(res => res.json())
+        .then(rutas => {
+            rutasJson = rutas;
+            filtrarSedes(); // aplicar rutas luego de cargar
+        })
+        .catch(err => console.error("❌ Error cargando rutas:", err));
+
 </script>
 
 
